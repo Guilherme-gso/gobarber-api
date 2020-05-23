@@ -1,9 +1,9 @@
 import express from 'express';
 import 'express-async-errors';
+import uploadConfig from '@config/upload';
 import routes from './routes';
-import uploadConfig from './config/upload';
 import exceptionMiddleware from './middlewares/exceptionMiddleware';
-import './database';
+import '../typeorm';
 import 'reflect-metadata';
 
 const server = express();

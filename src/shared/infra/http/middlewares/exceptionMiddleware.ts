@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import ExepctionHandling from '../errors/ExceptionHandling';
+import ExepctionHandling from '@shared/errors/ExceptionHandling';
 
 function exceptionGlobalHandling(
   error: Error,
