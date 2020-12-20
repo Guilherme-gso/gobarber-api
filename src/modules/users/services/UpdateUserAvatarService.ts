@@ -1,36 +1,37 @@
-import { getRepository } from 'typeorm';
-import fs from 'fs';
-import path from 'path';
 import User from '@modules/users/infra/typeorm/entities/User';
 import ExceptionHandling from '@shared/errors/ExceptionHandling';
-import uploadConfig from '@config/upload';
+import { inject, injectable } from 'tsyringe';
+import IStorageProvider from '@shared/container/providers/StorageProvider/models/IStorageProvider';
+import IUsersRepository from '../repositories/IUsersRepository';
 
-interface RequestDTO {
+interface IRequest {
   user_id: string;
   avatarFilename: string;
 }
-class UpdateUserAvatarService {
-  public async execute({ user_id, avatarFilename }: RequestDTO): Promise<User> {
-    const userRepository = getRepository(User);
 
-    const user = await userRepository.findOne(user_id);
+@injectable()
+class UpdateUserAvatarService {
+  constructor(
+    @inject('UsersRepository') private usersRepository: IUsersRepository,
+    @inject('StorageProvider') private storageProvider: IStorageProvider
+  ) {}
+
+  public async execute({ user_id, avatarFilename }: IRequest): Promise<User> {
+    const user = await this.usersRepository.findById(user_id);
 
     if (!user) {
       throw new ExceptionHandling('User not authenticated to update avatar');
     }
 
     if (user.avatar) {
-      const avatarFilePath = path.join(uploadConfig.directory, user.avatar);
-      const avatarPathExists = await fs.promises.stat(avatarFilePath);
-
-      if (avatarPathExists) {
-        await fs.promises.unlink(avatarFilePath);
-      }
+      await this.storageProvider.deleteFile(user.avatar);
     }
 
-    user.avatar = avatarFilename;
+    const filename = await this.storageProvider.saveFile(avatarFilename);
 
-    await userRepository.save(user);
+    user.avatar = filename;
+
+    await this.usersRepository.save(user);
 
     return user;
   }

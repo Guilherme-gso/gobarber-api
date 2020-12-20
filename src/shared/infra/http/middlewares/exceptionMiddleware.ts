@@ -15,8 +15,8 @@ function exceptionGlobalHandling(
   }
 
   return response.status(500).json({
-    status: 'error',
-    message: 'Internal server error',
+    status: 'Internal server error',
+    message: error.message,
   });
 }
 

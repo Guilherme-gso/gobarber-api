@@ -1,30 +1,38 @@
-import { getRepository } from 'typeorm';
-import { compare } from 'bcryptjs';
 import { sign } from 'jsonwebtoken';
 import User from '@modules/users/infra/typeorm/entities/User';
 import authConfig from '@config/auth';
 import ExceptionHandling from '@shared/errors/ExceptionHandling';
+import { inject, injectable } from 'tsyringe';
+import IUsersRepository from '../repositories/IUsersRepository';
+import IHashProvider from '../providers/HashProvider/models/IHashProvider';
 
-interface RequestDTO {
+interface IRequest {
   email: string;
   password: string;
 }
-interface ReponseUser {
+interface IReponseUser {
   user: User;
   token: string;
 }
 
+@injectable()
 class CreateSessionService {
-  public async execute({ email, password }: RequestDTO): Promise<ReponseUser> {
-    const userRepository = getRepository(User);
+  constructor(
+    @inject('UsersRepository') private usersRepository: IUsersRepository,
+    @inject('HashProvider') private hashProvider: IHashProvider
+  ) {}
 
-    const user = await userRepository.findOne({ where: { email } });
+  public async execute({ email, password }: IRequest): Promise<IReponseUser> {
+    const user = await this.usersRepository.findByEmail(email);
 
     if (!user) {
       throw new ExceptionHandling('Email/password invalid', 401);
     }
 
-    const userPasswordCheck = await compare(password, user.password);
+    const userPasswordCheck = await this.hashProvider.compare(
+      password,
+      user.password
+    );
 
     if (!userPasswordCheck) {
       throw new ExceptionHandling('Email/password invalid', 401);

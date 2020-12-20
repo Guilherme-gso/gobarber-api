@@ -1,18 +1,22 @@
-import express from 'express';
+import 'reflect-metadata';
+
 import 'express-async-errors';
+
+import express from 'express';
 import uploadConfig from '@config/upload';
 import routes from './routes';
 import exceptionMiddleware from './middlewares/exceptionMiddleware';
-import '../typeorm';
-import 'reflect-metadata';
 
-const server = express();
-const port = 3333;
+import '@shared/infra/typeorm';
+import '@shared/container';
 
-server.use(express.json());
-server.use(routes);
-server.use(exceptionMiddleware);
-server.use('/files', express.static(uploadConfig.directory));
-server.listen(port, () => {
-  console.log(`Back-end is running on port ${port}`);
+const app = express();
+const PORT = 3333;
+
+app.use(express.json());
+app.use(routes);
+app.use(exceptionMiddleware);
+app.use('/files', express.static(uploadConfig.directory));
+app.listen(PORT, () => {
+  console.log(`Back-end is running on port ${PORT}`);
 });
